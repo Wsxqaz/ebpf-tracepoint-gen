@@ -1,3 +1,4 @@
+#![allow(warnings)]
 use std::fs;
 use std::mem::MaybeUninit;
 
@@ -65,8 +66,12 @@ fn main() {
                             let mut name_buff = [0u8; 128];
                             for i in 0..li {
                                 if item.chars().nth(li - 1 - i).unwrap() == ' ' {
-                                    for j in  0..i  {
-                                        // name_buff[j] = item.chars().nth(li - 1 - i + j).unwrap() as u8;
+                                    println!("item: {}", item);
+                                    println!("space at: {} (li - 1 - i)", (li - 1 - i));
+                                    for j in  (li - 1 - i)..li {
+                                        name_buff[j.wrapping_sub(li - 1 - i)] = item.chars().nth(j).unwrap() as u8;
+                                    }
+                                    for j in  0..(li - 1 - i)  {
                                         type_buff[j] = item.chars().nth(j).unwrap() as u8;
                                     }
                                     break;
