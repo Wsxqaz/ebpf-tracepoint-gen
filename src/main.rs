@@ -5,7 +5,7 @@ use std::io::Write;
 use std::mem::MaybeUninit;
 
 #[derive(Default, Debug)]
-pub struct _SyscallMetaEntry<'a> {
+pub struct SyscallMetaEntry<'a> {
     _type: Box<&'a str>,
     name: Box<&'a str>,
     offset: Box<&'a str>,
@@ -14,16 +14,10 @@ pub struct _SyscallMetaEntry<'a> {
 }
 
 #[derive(Default, Debug)]
-pub struct _SyscallMeta<'a> {
+pub struct SyscallMeta<'a> {
     file: &'a str,
     sec_name: &'a str,
-    fields: Vec<_SyscallMetaEntry<'a>>,
-}
-
-#[derive(Default, Debug)]
-pub struct SyscallMeta<'a> {
-    enter: _SyscallMeta<'a>,
-    exit: _SyscallMeta<'a>,
+    fields: Vec<SyscallMetaEntry<'a>>,
 }
 
 static SYSCALL_EVENTS_DIR: &str = "/sys/kernel/tracing/events/syscalls";
@@ -34,7 +28,7 @@ fn main() {
 
     let syscall_events_paths = fs::read_dir(SYSCALL_EVENTS_DIR).unwrap();
 
-    let metas: Vec<_SyscallMeta> = Vec::new();
+    let metas: Vec<SyscallMeta> = Vec::new();
 
     for path in syscall_events_paths {
         let _path = path.unwrap().path().clone();
@@ -52,7 +46,7 @@ fn main() {
             Err(e) => "error",
         };
 
-        let mut fields: Vec<_SyscallMetaEntry> = vec![];
+        let mut fields: Vec<SyscallMetaEntry> = vec![];
 
         for line in lines.lines() {
             let line = line.trim();
@@ -66,7 +60,7 @@ fn main() {
         let sec_name = sec_name.split("/").nth(6).unwrap();
         let sec_name = format!("tp/syscalls/{}", sec_name);
 
-        let syscall_meta: _SyscallMeta = _SyscallMeta {
+        let syscall_meta: SyscallMeta = SyscallMeta {
             file: &format_path,
             sec_name: &sec_name,
             fields: fields
@@ -93,10 +87,10 @@ fn main() {
     }
 }
 
-fn gen_field<'a>(line: &str) -> _SyscallMetaEntry {
+fn gen_field<'a>(line: &str) -> SyscallMetaEntry {
                 let tk: Vec<String> = line.split(";").map(|c| c.to_string()).collect();
                 if (tk.len() < 4) {
-                    return _SyscallMetaEntry { .. Default::default() };
+                    return SyscallMetaEntry { .. Default::default() };
                 }
                 let mut type_buff = Box::new([0u8; 128]);
                 let mut name_buff = Box::new([0u8; 128]);
@@ -193,7 +187,7 @@ fn gen_field<'a>(line: &str) -> _SyscallMetaEntry {
                 );
 
 
-                let mut meta_ent = _SyscallMetaEntry {
+                let mut meta_ent = SyscallMetaEntry {
                     name: name,
                     _type: _type,
                     offset: offset,
