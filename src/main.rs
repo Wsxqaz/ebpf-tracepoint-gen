@@ -74,6 +74,7 @@ fn main() {
         let mut file = File::create(format!("progs/{}.c", fp.clone())).unwrap();
 
         file.write_all(b"#define BPF_NO_GLOBAL_DATA\n");
+        file.write_all(b"#include <stddef.h>\n");
         file.write_all(b"#include <linux/bpf.h>\n");
         file.write_all(b"#include <bpf/bpf_helpers.h>\n");
         file.write_all(b"#include <bpf/bpf_tracing.h>\n");
@@ -81,6 +82,19 @@ fn main() {
         file.write_all(b"\n");
         file.write_all(format!("SEC(\"{}\")\n", syscall_meta.sec_name).as_bytes());
         file.write_all(b"int handle_tp(void *ctx) {\n");
+
+        for field in syscall_meta.fields {
+            file.write_all(
+                format!(
+                    "  {} {} = *(({} *)(ctx + {}));\n",
+                    field._type,
+                    field.name,
+                    field._type,
+                    field.offset
+                ).as_bytes()
+            );
+        }
+
         file.write_all(format!("  bpf_printk(\"{}\");\n", fp.clone()).as_bytes());
         file.write_all(b"  return 0;\n");
         file.write_all(b"}\n");
@@ -107,7 +121,7 @@ fn gen_field<'a>(line: &str) -> SyscallMetaEntry {
                                     name_buff[j.wrapping_sub(li - i)] =
                                         item.chars().nth(j).unwrap() as u8;
                                 }
-                                for j in 0..(li - 1 - i) {
+                                for j in 6..(li - 1 - i) {
                                     type_buff[j] = item.chars().nth(j).unwrap() as u8;
                                 }
 
@@ -162,6 +176,7 @@ fn gen_field<'a>(line: &str) -> SyscallMetaEntry {
                 let mut _type = Box::new(
                     std::str::from_utf8(leaked_type_buff)
                         .unwrap()
+                        .trim_start_matches(|c| c == '\0')
                         .trim_end_matches(|c| c == '\0')
                 );
                 let leaked_offset_buff = Box::leak(offset_buff);
