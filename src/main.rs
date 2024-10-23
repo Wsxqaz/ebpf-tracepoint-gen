@@ -83,7 +83,7 @@ fn main() {
         file.write_all(format!("SEC(\"{}\")\n", syscall_meta.sec_name).as_bytes());
         file.write_all(b"int handle_tp(void *ctx) {\n");
 
-        for field in syscall_meta.fields {
+        for field in &syscall_meta.fields {
             file.write_all(
                 format!(
                     "  {} {} = *(({} *)(ctx + {}));\n",
@@ -91,6 +91,24 @@ fn main() {
                     field.name,
                     field._type,
                     field.offset
+                ).as_bytes()
+            );
+        }
+
+        for field in &syscall_meta.fields {
+            let formatter = match &field.size {
+                t if *t == Box::new("1")     => "%c",
+                t if *t == Box::new("2")     => "%u",
+                t if *t == Box::new("4")     => "%d",
+                _                           => "%px",
+            };
+
+            file.write_all(
+                format!(
+                    "  bpf_printk(\"{} => {}\", {});\n",
+                    field.name,
+                    formatter,
+                    field.name
                 ).as_bytes()
             );
         }
