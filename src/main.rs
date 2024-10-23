@@ -14,6 +14,7 @@ pub struct _SyscallMetaEntry<'a> {
 #[derive(Default, Debug)]
 pub struct _SyscallMeta<'a> {
     file: &'a str,
+    sec_name: &'a str,
     fields: Vec<_SyscallMetaEntry<'a>>,
 }
 
@@ -59,8 +60,13 @@ fn main() {
             }
         }
 
+        let sec_name = &format_path.clone();
+        let sec_name = sec_name.split("/").nth(6).unwrap();
+        let sec_name = format!("tp/syscalls/{}", sec_name);
+
         let syscall_meta: _SyscallMeta = _SyscallMeta {
             file: &format_path,
+            sec_name: &sec_name,
             fields: fields
         };
 
