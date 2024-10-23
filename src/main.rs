@@ -1,5 +1,7 @@
 #![allow(warnings)]
 use std::fs;
+use std::fs::File;
+use std::io::Write;
 use std::mem::MaybeUninit;
 
 #[derive(Default, Debug)]
@@ -71,6 +73,23 @@ fn main() {
         };
 
         println!("syscall_meta: {:?}", syscall_meta);
+
+        let fp = &format_path.clone();
+        let fp = fp.split("/").nth(6).unwrap();
+
+        let mut file = File::create(format!("progs/{}.c", fp.clone())).unwrap();
+
+        file.write_all(b"#define BPF_NO_GLOBAL_DATA\n");
+        file.write_all(b"#include <linux/bpf.h>\n");
+        file.write_all(b"#include <bpf/bpf_helpers.h>\n");
+        file.write_all(b"#include <bpf/bpf_tracing.h>\n");
+        file.write_all(b"char LICENSE[] SEC(\"license\") = \"Dual BSD/GPL\";\n");
+        file.write_all(b"\n");
+        file.write_all(format!("SEC(\"{}\")\n", syscall_meta.sec_name).as_bytes());
+        file.write_all(b"int handle_tp(void *ctx) {\n");
+        file.write_all(format!("  bpf_printk(\"{}\");\n", fp.clone()).as_bytes());
+        file.write_all(b"  return 0;\n");
+        file.write_all(b"}\n");
     }
 }
 
