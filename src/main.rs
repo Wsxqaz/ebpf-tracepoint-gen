@@ -74,19 +74,17 @@ fn main() {
         let mut file = File::create(format!("progs/{}.c", fp.clone())).unwrap();
 
         file.write_all(b"#define BPF_NO_GLOBAL_DATA\n");
-        file.write_all(b"#include <stddef.h>\n");
-        file.write_all(b"#include <linux/bpf.h>\n");
+        file.write_all(b"#include <vmlinux.h>\n");
         file.write_all(b"#include <bpf/bpf_helpers.h>\n");
-        file.write_all(b"#include <bpf/bpf_tracing.h>\n");
         file.write_all(b"char LICENSE[] SEC(\"license\") = \"Dual BSD/GPL\";\n");
         file.write_all(b"\n");
         file.write_all(format!("SEC(\"{}\")\n", syscall_meta.sec_name).as_bytes());
-        file.write_all(b"int handle_tp(void *ctx) {\n");
+        file.write_all(b"int handle_tp(struct trace_event_raw_sys_enter *ctx) {\n");
 
         for field in &syscall_meta.fields {
             file.write_all(
                 format!(
-                    "  {} {} = *(({} *)(ctx + {}));\n",
+                    "  {} {} = *(({} *)(ctx.__data + {}));\n",
                     field._type,
                     field.name,
                     field._type,
