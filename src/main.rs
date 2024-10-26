@@ -81,37 +81,45 @@ fn main() {
         file.write_all(format!("SEC(\"{}\")\n", syscall_meta.sec_name).as_bytes());
         file.write_all(b"int handle_tp(struct trace_event_raw_sys_enter *ctx) {\n");
 
+        let mut i = 0;
         for field in &syscall_meta.fields {
-            file.write_all(
-                format!(
-                    "  {} {} = *(({} *)(ctx.__data + {}));\n",
-                    field._type,
-                    field.name,
-                    field._type,
-                    field.offset
-                ).as_bytes()
-            );
+            if (i > 4) {
+                file.write_all(
+                    format!(
+                        "  {} {} = ({})(ctx->args[{}]);\n",
+                        field._type,
+                        field.name,
+                        field._type,
+                        i - 5
+                    ).as_bytes()
+                );
+            }
+            i += 1;
         }
 
+        let mut i = 0;
         for field in &syscall_meta.fields {
-            let formatter = match &field.size {
-                t if *t == Box::new("1")     => "%c",
-                t if *t == Box::new("2")     => "%u",
-                t if *t == Box::new("4")     => "%d",
-                _                           => "%px",
-            };
+            if (i > 4) {
+                let formatter = match &field.size {
+                    t if *t == Box::new("1")     => "%c",
+                    t if *t == Box::new("2")     => "%u",
+                    t if *t == Box::new("4")     => "%d",
+                    _                           => "%px",
+                };
 
-            file.write_all(
-                format!(
-                    "  bpf_printk(\"{} => {}\", {});\n",
-                    field.name,
-                    formatter,
-                    field.name
-                ).as_bytes()
-            );
+                file.write_all(
+                    format!(
+                        "  bpf_printk(\"{} => {}\\n\", {});\n",
+                        field.name,
+                        formatter,
+                        field.name
+                    ).as_bytes()
+                );
+            }
+            i += 1;
         }
 
-        file.write_all(format!("  bpf_printk(\"{}\");\n", fp.clone()).as_bytes());
+        file.write_all(format!("  bpf_printk(\"{}\\n\");\n", fp.clone()).as_bytes());
         file.write_all(b"  return 0;\n");
         file.write_all(b"}\n");
     }
