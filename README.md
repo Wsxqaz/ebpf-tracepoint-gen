@@ -1,5 +1,5 @@
 # ebpf-tracepoint-gen
-ebpf prog generator for syscall tracepoints
+ebpf prog generator for syscall tracepoints, prints syscall args
 
 ## build
 
@@ -37,5 +37,11 @@ INFO [bpf_loader_lib::skeleton::poller] Running ebpf program...
 
 ```bash
 > sudo cat /sys/kernel/debug/tracing/trace_pipe
+    systemd-oomd-1093    [000] ...21  7072.626159: bpf_trace_printk: dfd => 00000000ffffff9c
+    systemd-oomd-1093    [000] ...21  7072.626159: bpf_trace_printk: filename => 000055b30855bbf0
+    systemd-oomd-1093    [000] ...21  7072.626159: bpf_trace_printk: flags => 0000000000080000
+    systemd-oomd-1093    [000] ...21  7072.626159: bpf_trace_printk: mode => 0000000000000000
+    systemd-oomd-1093    [000] ...21  7072.626160: bpf_trace_printk: sys_enter_openat
+
 ```
 
